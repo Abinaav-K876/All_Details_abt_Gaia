@@ -1,0 +1,13 @@
+{
+  "air_val": 30,
+  "air_on": 0,
+  "air_tot": 1,
+  "water_val": 0,
+  "water_on": 0,
+  "water_tot": 1,
+  "hepa_on": 0,
+  "hepa_tot": 1,
+  "drone_on": 1,
+  "genesis_on": 1,
+  "genesis_tot": 1
+}

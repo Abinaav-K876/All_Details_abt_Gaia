@@ -1,0 +1,4 @@
+smtplib
+psycopg2
+email
+sqlite3
