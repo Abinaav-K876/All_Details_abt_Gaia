@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2E7D32">
+<title>GAIA OS</title>
+
+<style>
+    :root {
+        --p-green: #00E676; --p-green-dim: #1B5E20; --bg-green: #0a140a; --card-green: #112211;
+        --p-light: #2979FF; --p-light-dim: #E3F2FD; --bg-light: #F4F6F8; --card-light: #FFFFFF;
+        --p-dark: #BB86FC; --p-dark-dim: #3700B3; --bg-dark: #121212; --card-dark: #1E1E1E;
+
+        --primary: var(--p-green); --bg-body: var(--bg-green); --bg-card: var(--card-green);
+        --bg-nav: rgba(17, 34, 17, 0.85); --text-main: #FFFFFF; --text-sub: rgba(255,255,255,0.6);
+        --border: rgba(255,255,255,0.1); --shadow: 0 10px 30px rgba(0,0,0,0.3);
+        --radius: 20px; --spacing: 20px; --nav-height: 80px; --max-width: 1200px;
+    }
+
+    [data-theme="light"] {
+        --primary: var(--p-light); --bg-body: var(--bg-light); --bg-card: var(--card-light);
+        --bg-nav: rgba(255,255,255,0.85); --text-main: #1A1A1A; --text-sub: #666666;
+        --border: rgba(0,0,0,0.08); --shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    [data-theme="dark"] {
+        --primary: var(--p-dark); --bg-body: var(--bg-dark); --bg-card: var(--card-dark);
+        --bg-nav: rgba(30,30,30,0.85); --border: rgba(255,255,255,0.08);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-body); color: var(--text-main); overflow: hidden; transition: background 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+    #app-shell { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: 1fr; height: 100vh; }
+    aside { background: var(--bg-card); border-right: 1px solid var(--border); padding: 40px 30px; display: flex; flex-direction: column; z-index: 20; }
+
+    .viewport {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    }
+
+    .viewport::-webkit-scrollbar {
+    width: 8px;
+    }
+
+    .viewport::-webkit-scrollbar-track {
+    background: transparent;
+    }
+
+    .viewport::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    }
+
+    .viewport::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-sub);
+    }
+
+    .brand { display: flex; align-items: center; gap: 15px; margin-bottom: 60px; }
+    .logo { width: 44px; height: 44px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px var(--primary); }
+    .logo svg { width: 24px; height: 24px; fill: #000; }
+    .brand-txt h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
+    .brand-txt p { margin: 2px 0 0; font-size: 11px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 2px; }
+
+    .nav-list { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .nav-item { display: flex; align-items: center; gap: 15px; padding: 16px 20px; color: var(--text-sub); border-radius: 16px; cursor: pointer; transition: 0.2s ease; font-weight: 600; font-size: 15px; }
+    .nav-item:hover { background: rgba(128,128,128,0.1); color: var(--text-main); }
+    .nav-item.active { background: var(--primary); color: #000; box-shadow: 0 5px 15px -5px var(--primary); }
+    .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
+
+    main { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    header { height: 80px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; background: transparent; z-index: 10; }
+    .page-title { font-size: 24px; font-weight: 800; }
+    .sys-pill { background: var(--bg-card); border: 1px solid var(--border); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+    .dot.on { background: var(--primary); box-shadow: 0 0 10px var(--primary); animation: pulse 2s infinite; }
+
+    .viewport { flex: 1; overflow-y: auto; padding: 20px 40px 100px; scroll-behavior: smooth; }
+
+    .view { display: none; animation: fadeScale 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-width: var(--max-width); margin: 0 auto; }
+    .view.active { display: block; }
+    @keyframes fadeScale { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    .titan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 25px; position: relative; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
+    .card-val { font-size: 28px; font-weight: 800; color: var(--text-main); }
+
+    .chart-box { width: 100%; height: 60px; margin-top: 15px; position: relative; }
+    svg.sparkline { width: 100%; height: 100%; overflow: visible; }
+    path.line { fill: none; stroke: var(--primary); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+    path.fill { fill: var(--primary); stroke: none; opacity: 0.15; }
+
+    .wifi-list { display: flex; flex-direction: column; gap: 10px; }
+    .wifi-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(128,128,128,0.05); border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+    .wifi-row:hover { border-color: var(--primary); background: rgba(128,128,128,0.1); }
+    .rssi-tag { font-size: 11px; font-weight: 700; padding: 4px 8px; background: var(--bg-body); border-radius: 6px; }
+
+    .input-wrap { position: relative; margin-bottom: 15px; }
+    input { width: 100%; padding: 16px; background: var(--bg-body); border: 2px solid var(--border); border-radius: 14px; color: var(--text-main); font-size: 16px; outline: none; transition: 0.3s; }
+    input:focus { border-color: var(--primary); }
+    .toggle-eye { position: absolute; right: 16px; top: 16px; cursor: pointer; color: var(--text-sub); transition: 0.2s; }
+    .toggle-eye:hover { color: var(--primary); }
+    .toggle-eye svg { width: 22px; height: 22px; fill: currentColor; }
+
+    .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; background: var(--primary); color: #000; transition: 0.2s; display: flex; justify-content: center; gap: 10px; }
+    .btn:active { transform: scale(0.98); }
+    .btn-ghost { background: transparent; border: 2px solid var(--border); color: var(--text-sub); }
+    .btn-red { background: rgba(255,82,82,0.1); color: #ff5252; border: 1px solid #ff5252; }
+    .btn-red:hover { background: #ff5252; color: #fff; }
+
+    .settings-group { margin-bottom: 30px; }
+    .group-label { font-size: 12px; color: var(--text-sub); margin-bottom: 10px; padding-left: 10px; font-weight: 700; }
+    .setting-row { background: var(--bg-card); border: 1px solid var(--border); padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .setting-row:first-child { border-radius: 16px 16px 0 0; }
+    .setting-row:last-child { border-radius: 0 0 16px 16px; border-top: none; }
+    .setting-row:only-child { border-radius: 16px; border-top: 1px solid var(--border); }
+
+    .theme-tog { display: flex; gap: 5px; background: var(--bg-body); padding: 4px; border-radius: 10px; }
+    .t-opt { padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .t-opt.active { background: var(--bg-card); color: var(--text-main); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+    @media (max-width: 900px) {
+        #app-shell { grid-template-columns: 1fr; grid-template-rows: 1fr 70px; }
+        aside { position: fixed; bottom: 0; left: 0; width: 100%; height: 80px; flex-direction: row; padding: 0; border-top: 1px solid var(--border); border-right: none; justify-content: space-around; background: var(--bg-nav); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .brand, .nav-text { display: none; }
+        .nav-list { flex-direction: row; width: 100%; justify-content: space-around; }
+        .nav-item { flex-direction: column; gap: 5px; padding: 10px; font-size: 10px; border-radius: 0; background: transparent !important; box-shadow: none !important; }
+        .nav-item.active { color: var(--primary); }
+        .viewport { padding: 20px 20px 100px; }
+        header { padding: 0 20px; }
+    }
+</style>
+
+
+</head>
+<body>
+
+    <svg style="display:none">
+        <symbol id="icon-dash" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></symbol>
+        <symbol id="icon-wifi" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></symbol>
+        <symbol id="icon-set" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+        <symbol id="icon-logo" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.8L19.5 18H4.5L12 5.8z"/></symbol>
+        <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+    </svg>
+
+    <div id="app-shell">
+        <aside>
+            <div class="brand">
+                <div class="logo"><svg><use href="#icon-logo"/></svg></div>
+                <div class="brand-txt">
+                    <h1>GAIA SENTINEL</h1>
+                    <p id="brand-subtitle">NODE INIT...</p>
+                </div>
+            </div>
+            <nav class="nav-list">
+                <div class="nav-item active" onclick="app.nav('dash', this)">
+                    <svg><use href="#icon-dash"/></svg> <span class="nav-text">Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="app.nav('wifi', this)">
+                    <svg><use href="#icon-wifi"/></svg> <span class="nav-text">WiFi Manager</span>
+                </div>
+                <div class="nav-item" onclick="app.nav('set', this)">
+                    <svg><use href="#icon-set"/></svg> <span class="nav-text">Settings</span>
+                </div>
+            </nav>
+        </aside>
+
+        <main>
+            <header>
+                <div class="page-title" id="header-title">Dashboard</div>
+                <div class="sys-pill">
+                    <div class="dot" id="led-stat"></div>
+                    <span id="txt-stat">Connecting...</span>
+                </div>
+            </header>
+
+            <div class="viewport">
+                <div id="view-dash" class="view active">
+                    <div id="hero-banner" class="card" style="border-left: 5px solid #ff5252; display:flex; align-items:center; gap:20px; margin-bottom:30px;">
+                        <div style="font-size:30px;">⚠️</div>
+                        <div>
+                            <h3 style="margin:0">System Offline</h3>
+                            <p style="margin:5px 0 0; opacity:0.7">Access Point Mode. Connect to WiFi to enable cloud sync.</p>
+                        </div>
+                    </div>
+                    <div id="widget-grid" class="titan-grid">
+                        <div class="card" style="text-align:center; opacity:0.5; padding:40px;">Initializing Sensors...</div>
+                    </div>
+                </div>
+
+                <div id="view-wifi" class="view">
+                    <div class="card" style="max-width:500px; margin:0 auto 30px;">
+                        <div class="card-head"><div class="card-title">Connect Network</div></div>
+                        <form id="form-wifi">
+                            <div class="input-wrap">
+                                <input type="text" id="inp-ssid" placeholder="Choose Network..." readonly required>
+                            </div>
+                            <div class="input-wrap">
+                                <input type="password" id="inp-pass" placeholder="Password" required>
+                                <div class="toggle-eye" onclick="app.togglePass()">
+                                    <svg><use href="#icon-eye"/></svg>
+                                </div>
+                            </div>
+                            <button class="btn">Connect</button>
+                        </form>
+                    </div>
+                    <div class="card" style="max-width:500px; margin:0 auto;">
+                        <div class="card-head">
+                            <div class="card-title">Available Networks</div>
+                            <button class="btn btn-ghost" style="width:auto; padding:8px 16px; font-size:12px" onclick="app.scan()">Rescan</button>
+                        </div>
+                        <div id="wifi-results" class="wifi-list">
+                            <div style="text-align:center; padding:20px; opacity:0.5">Tap Rescan to search</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-set" class="view" style="max-width:600px; margin:0 auto;">
+                    <div class="settings-group">
+                        <div class="group-label">INTERFACE</div>
+                        <div class="setting-row">
+                            <span>Theme Mode</span>
+                            <div class="theme-tog">
+                                <div class="t-opt active" id="btn-green" onclick="app.theme('green', this)">Forest</div>
+                                <div class="t-opt" id="btn-light" onclick="app.theme('light', this)">Day</div>
+                                <div class="t-opt" id="btn-dark" onclick="app.theme('dark', this)">Night</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="group-label">DEVICE HEALTH</div>
+                        <div class="setting-row">
+                            <span>Node ID</span>
+                            <span id="sys-id" style="font-family:monospace; color:var(--primary); font-weight:bold">--</span>
+                        </div>
+                        <div class="setting-row">
+                            <span>Uptime</span>
+                            <span id="sys-up">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const SENSOR_ORDER = ["MQ135", "MQ7", "MQ2", "MQ4", "MQ6", "TEMP", "HUM"];
+        
+        class GaiaApp {
+            constructor() {
+                this.state = { connected: false, history: {} };
+                this.firstLoad = true;
+            }
+
+            nav(viewId, btn) {
+                document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+                document.getElementById('view-' + viewId).classList.add('active');
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('header-title').innerText = {dash:'Dashboard', wifi:'WiFi Manager', set:'System Settings'}[viewId];
+                if(viewId === 'wifi') this.scan();
+            }
+
+            theme(mode, btn) {
+                document.documentElement.setAttribute('data-theme', mode);
+                document.querySelectorAll('.t-opt').forEach(el => el.classList.remove('active'));
+                if(btn) btn.classList.add('active');
+                else document.getElementById('btn-'+mode).classList.add('active');
+                fetch('/api/theme', { method: 'POST', body: JSON.stringify({theme: mode}) }).catch(console.log);
+            }
+
+            togglePass() {
+                const inp = document.getElementById('inp-pass');
+                inp.type = inp.type === 'password' ? 'text' : 'password';
+            }
+
+            // --- NEW: DISCONNECT FUNCTION ---
+            async disconnect() {
+                if(!confirm("Are you sure you want to disconnect from WiFi?")) return;
+                try {
+                    await fetch('/api/disconnect', {method:'POST'});
+                    alert("Disconnected from Network. Please connect to the Access Point to reconfigure.");
+                    window.location.reload();
+                } catch(e) { alert("Error sending command"); }
+            }
+
+            renderChart(elementId, data) {
+                const svg = document.getElementById(elementId);
+                if(!svg) return;
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const range = max - min || 1;
+                let path = "", area = "";
+                const step = 100 / (data.length - 1);
+                data.forEach((val, i) => {
+                    const y = 100 - ((val - min) / range * 80 + 10);
+                    const x = i * step;
+                    path += `${i === 0 ? "M" : "L"} ${x} ${y} `;
+                });
+                area = path + "L 100 120 L 0 120 Z";
+                svg.innerHTML = `<path class="fill" d="${area}" /><path class="line" d="${path}" />`;
+            }
+
+            renderWidgets(data) {
+    const grid = document.getElementById('widget-grid');
+    grid.innerHTML = '';
+
+    SENSOR_ORDER.forEach(key => {
+        if (!data[key]) return;
+
+        const obj = data[key];
+        const id = 'chart-' + key.replace(/\s+/g, '');
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
+            <div class="card-head">
+                <div class="card-title">${key}</div>
+                <div class="card-icon" style="opacity:0.5">●</div>
+            </div>
+            <div class="card-val">${obj.val}</div>
+            <div class="chart-box">
+                <svg id="${id}" class="sparkline" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+            </div>
+        `;
+
+        grid.appendChild(card);
+
+        if (obj.hist && obj.hist.length > 1) {
+            this.renderChart(id, obj.hist);
+        }
+    });
+}
+
+            async poll() {
+                try {
+                    const r = await fetch('/api/status');
+                    const d = await r.json();
+
+                    if(this.firstLoad && d.sys.theme) {
+                        this.theme(d.sys.theme, null);
+                        this.firstLoad = false;
+                    }
+
+                    if(d.sensors) this.renderWidgets(d.sensors);
+                    document.getElementById('sys-id').innerText = d.sys.id;
+                    document.getElementById('brand-subtitle').innerText = "NODE: " + d.sys.id;
+
+                    const sec = Math.floor(d.sys.uptime);
+                    const h = Math.floor(sec / 3600);
+                    const m = Math.floor((sec % 3600) / 60);
+                    document.getElementById('sys-up').innerText = `${h}h ${m}m`;
+
+                    const led = document.getElementById('led-stat');
+                    const txt = document.getElementById('txt-stat');
+                    const banner = document.getElementById('hero-banner');
+
+                    if(d.wifi.conn) {
+                        led.className = 'dot on';
+                        txt.innerText = 'Online';
+                        banner.style.borderLeftColor = 'var(--primary)';
+                        // Added Disconnect Button here
+                        banner.innerHTML = `
+                            <div style="font-size:30px; color:var(--primary)">✓</div>
+                            <div style="flex:1">
+                                <h3 style="margin:0">System Online</h3>
+                                <p style="margin:5px 0 0; opacity:0.7">Connected to ${d.wifi.ssid}</p>
+                            </div>
+                            <button class="btn btn-red" style="width:auto; padding:8px 16px; font-size:11px" onclick="app.disconnect()">Disconnect</button>
+                        `;
+                    } else {
+                        led.className = 'dot';
+                        txt.innerText = 'Offline';
+                    }
+                } catch(e) {}
+            }
+
+            async scan() {
+                const list = document.getElementById('wifi-results');
+                list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5">Scanning spectrum...</div>';
+                try {
+                    const r = await fetch('/api/scan');
+                    const d = await r.json();
+                    let html = '';
+                    d.nets.forEach(n => {
+                        html += `<div class="wifi-row" onclick="document.getElementById('inp-ssid').value='${n.ssid}'"><div style="font-weight:700">${n.ssid}</div><div style="display:flex; align-items:center; gap:10px"><span style="font-size:12px; opacity:0.5">${n.sec ? '🔒' : '🔓'}</span><span class="rssi-tag">${n.rssi}dB</span></div></div>`;
+                    });
+                    list.innerHTML = html || '<div style="text-align:center; padding:20px">No networks found</div>';
+                } catch(e) { list.innerHTML = '<div style="text-align:center; padding:20px; color:red">Scan Error</div>'; }
+            }
+
+            async connect(e) {
+                e.preventDefault();
+                const btn = e.target.querySelector('button');
+                btn.innerText = "Connecting...";
+                try {
+                    const res = await fetch('/connect', { method: 'POST', body: JSON.stringify({ssid: document.getElementById('inp-ssid').value, password: document.getElementById('inp-pass').value}) });
+                    const data = await res.json();
+                    if(data.success) alert("Connected Successfully!");
+                    else alert("Connection Failed. Check Password.");
+                } catch(e) { alert("Connection Error"); }
+                btn.innerText = "Connect";
+            }
+        }
+
+        const app = new GaiaApp();
+        document.getElementById('form-wifi').onsubmit = (e) => app.connect(e);
+        setInterval(() => app.poll(), 2000);
+        app.poll();
+    </script>
+
+</body>
+</html>
